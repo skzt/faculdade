@@ -1,16 +1,11 @@
-import cv2
-import os
-import numpy as np
-import pickle
-from random import shuffle
-from tqdm.auto import tqdm
-from keras.optimizers import Adam
-from keras.callbacks import TensorBoard
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.model_selection import train_test_split
 from time import strftime
+
+import numpy as np
+from keras.callbacks import TensorBoard
+from keras.optimizers import Adam
 from lprnet import LPRNet
-#from HolisticDataset.lprnet import LPRNet
+
+# from HolisticDataset.lprnet import LPRNet
 # Comentario pra vida: numpay array shape = (LINHAS, COLUNAS)
 
 IMG_SIZE = 64  # 64 x 64
@@ -42,8 +37,8 @@ del test
 trainX = trainX.reshape(-1, IMG_SIZE, trainX[0].shape[1], 1)
 testX = testX.reshape(-1, IMG_SIZE, testX[0].shape[1], 1)
 
-trainX = trainX/255.0
-testX = testX/255.0
+trainX = trainX / 255.0
+testX = testX / 255.0
 print(f"Iniciando Treino:\n Train data shape = {trainX.shape}"
       f"\n Train label shape = {trainY.shape}"
       f"\n Test data shape = {testX.shape}"
@@ -51,7 +46,7 @@ print(f"Iniciando Treino:\n Train data shape = {trainX.shape}"
 
 model = LPRNet.build(trainX.shape[1], trainX.shape[2], 1, CLASSES_SIZE, OUTPUTS)
 
-optimizer = Adam(lr=LEARNING_RATE, decay=LEARNING_RATE/EPOCHS)
+optimizer = Adam(lr=LEARNING_RATE, decay=LEARNING_RATE / EPOCHS)
 model.compile(optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy"])
 
 tensorboard = TensorBoard(log_dir=f"logs/{strftime('%d-%m-%Y')}-{strftime('%H-%M-%S')}")
@@ -70,4 +65,3 @@ model.save(f"LR-LPR-("
            f"-HLP-dataset-"
            f"{strftime('%d-%m-%Y')}"
            f".h5")
-
