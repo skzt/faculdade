@@ -10,6 +10,7 @@ from keras.layers import Conv2D
 from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers import MaxPooling2D
+from keras.layers import Dropout
 from keras.models import Sequential
 from keras.optimizers import Adam
 from keras.utils import to_categorical
@@ -26,17 +27,31 @@ EPOCHS = 10
 def lprNet():
     new_model = Sequential()
 
-    new_model.add(Conv2D(32, (2, 2), input_shape=(ROW_SIZE, COL_SIZE, 1)))
+    new_model.add(Conv2D(32, kernel_size=(5, 5), input_shape=(ROW_SIZE, COL_SIZE, 1)))
     new_model.add(Activation('relu'))
+    new_model.add(MaxPooling2D(5))
 
-    new_model.add(Conv2D(64, (2, 2)))
+    new_model.add(Conv2D(64, kernel_size=(5, 5)))
     new_model.add(Activation('relu'))
+    new_model.add(MaxPooling2D(5))
 
-    new_model.add(MaxPooling2D())
+    new_model.add(Conv2D(128, kernel_size=(1, 1)))
+    new_model.add(Activation('relu'))
+    new_model.add(MaxPooling2D(1))
+
+    new_model.add(Conv2D(64, kernel_size=(1, 1)))
+    new_model.add(Activation('relu'))
+    new_model.add(MaxPooling2D(1))
+
+    new_model.add(Conv2D(32, kernel_size=(1, 1)))
+    new_model.add(Activation('relu'))
+    new_model.add(MaxPooling2D(1))
 
     new_model.add(Flatten())
-    new_model.add(Dense(32))
+    new_model.add(Dense(1024))
     new_model.add(Activation('relu'))
+    new_model.add(Dropout(0.2))
+
     new_model.add(Dense(2, activation="softmax"))
 
     return new_model
@@ -126,9 +141,11 @@ def generateData():
 
     trainX = np.array([img[0] for img in training_data])
     trainX = trainX.reshape(-1, ROW_SIZE, COL_SIZE, 1)
-    trainX = trainX / 255.00
+    trainX = trainX / 255.0
 
     trainY = np.array([img[1] for img in training_data])
+    print(trainY[:12])
+    print(trainY[0].shape)
 
     testX = np.array([img[0] for img in testing_data])
     testX = testX.reshape(-1, ROW_SIZE, COL_SIZE, 1)
@@ -142,9 +159,9 @@ def generateData():
 def treinar(epochs, tensorboard):
     for _ in range(int(epochs/10)):
         X, Y, test_x, test_y = generateData()
-        model.fit(X, Y, epochs=int(10), validation_data=(test_x, test_y), callbacks=[tensorboard])
+        model.fit(X, Y, batch_size=100, epochs=int(10), validation_data=(test_x, test_y), callbacks=[tensorboard])
         # TODO: testar com os test_x antes do proximo fit
-    model.save("CatDog02.h5")
+    model.save("CatDog03.h5")
 
 
 model = lprNet()
