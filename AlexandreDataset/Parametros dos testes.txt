@@ -1,26 +1,16 @@
-Test01.h5
-	10 epocas
-	1 conv2d(32, 2,2)
-	1 relu
-	1 dense(32)
-	1 softmax
+Alexandre01.h5
+    LR = 0.001
+    ROW_SIZE = 8
+    COL_SIZE = 5
+    EPOCHS = 10
+    CLASSES = 10
+    Conv2D(32, kernel_size=(2, 2), input_shape=(ROW_SIZE, COL_SIZE, 1))
+    Activation('relu')
+    Conv2D(64, kernel_size=(2, 2))
+    Activation('relu')
+    MaxPooling2D()
+    Flatten()
+    Dense(64)
+    Activation('relu')
+    Dense(CLASSES, activation="softmax")
 
-test05.h5
-	100 epocas
-	1 conv2d(32, 2,2)
-	1 relu
-	1 conv2d(64, 2,2)
-	1 relu
-	1 maxpool
-	1 dense(32)
-	1 softmax	
-	
-test05.h5
-	100 epocas
-	1 conv2d(32, 2,2)
-	1 relu
-	1 conv2d(64, 2,2)
-	1 relu
-	1 maxpool
-	1 dense(32)
-	1 softmax	
