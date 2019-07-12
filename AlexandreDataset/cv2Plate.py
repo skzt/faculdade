@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 from random import randint
 
 TEST_DIR = "./alexandre-real-20-GrayScale-(8, 5)-test.npy"
-MODEL_NAME = "alexandre01"
+MODEL_NAME = "alexandre03-80"
 ROW_SIZE = 8
 COL_SIZE = 5
 
