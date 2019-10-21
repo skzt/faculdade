@@ -10,4 +10,6 @@
 /HolisticDataset/*.tflearn.*
 /HolisticDataset/checkpoint
 /AlexandreDataset/checkpoint
-
+/HolisticDataset/.ipynb_checkpoints/*
+/AlexandreDataset/.ipynb_checkpoints/*
+/logs/*
