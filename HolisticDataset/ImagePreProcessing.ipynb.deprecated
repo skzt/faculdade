@@ -1,0 +1,671 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import random\n",
+    "import cv2\n",
+    "import os\n",
+    "import shutil\n",
+    "import numpy as np\n",
+    "from tqdm.auto import tqdm\n",
+    "from sklearn.preprocessing import LabelBinarizer"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# df = pd.read_csv(\"trainVal.csv\")\n",
+    "# arrUnique = df['lp'].unique()\n",
+    "# ret = []\n",
+    "# for unique in tqdm(arrUnique):\n",
+    "#     uniqueIndexs = df[df['lp']==unique].index\n",
+    "#     index = random.randint(0,uniqueIndexs.size-1)\n",
+    "#     img_info = df.loc[uniqueIndexs[index]]\n",
+    "#     ret.append(np.array([img_info[1], img_info[2]]))\n",
+    "#     \n",
+    "# ret = np.array(ret)\n",
+    "# np.save(\"hlp-locations.npy\", ret)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "DIR = \"../Datasets/hlp\"\n",
+    "DIR_TREINO = \"../Datasets/hlp/Treino\"\n",
+    "DIR_TREINO2 = \"../Datasets/hlp/Treino2\"\n",
+    "\n",
+    "IMG_SIZE = 64"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false
+    }
+   },
+   "outputs": [],
+   "source": [
+    "arr = np.load(\"hlp-locations.npy\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "b07560bca9fb4a4db39505eb950ca159",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "HBox(children=(IntProgress(value=0, max=8834), HTML(value='')))"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "'''\n",
+    "    Separa placas com 7 digitos e que os 4 ultimos sejam numerais.\n",
+    "    arr -> [ [img_path, LP] ... ]\n",
+    "    arr_sem_letra -> [ [img_path, LP] ... ] \n",
+    "'''\n",
+    "arr_sem_letra = []\n",
+    "for img in tqdm(arr):\n",
+    "    if len(img[1]) != 7:\n",
+    "        continue\n",
+    "    if img[1][-4:].isnumeric() is False:\n",
+    "        continue\n",
+    "    arr_sem_letra.append(img)\n",
+    "arr_sem_letra = np.array(arr_sem_letra)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "np.save(\"hlp-locations-final.npy\", arr_sem_letra)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "arr = np.load(\"hlp-locations-final.npy\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "1b294e1f164548e4b02ec148c5957385",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "HBox(children=(IntProgress(value=0, max=8589), HTML(value='')))"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "'''\n",
+    "    Agrupa as placas que possuem outras placas com os mesmos 4 ultrimos digitos.\n",
+    "    arr -> [ [img_path, LP] ... ]\n",
+    "    unicos_entre_si -> { LP[-4:] : [ [img_path, LP] ...] ... }\n",
+    "    \n",
+    "'''\n",
+    "unicos_entre_si = {}\n",
+    "for img_info in tqdm(arr):\n",
+    "    if img_info[1][-4:] in unicos_entre_si:\n",
+    "        unicos_entre_si[img_info[1][-4:]].append(img_info)\n",
+    "    else:\n",
+    "        unicos_entre_si[img_info[1][-4:]] = [img_info]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "5dce0e6d1a3c48b0a60df441f89a1261",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "HBox(children=(IntProgress(value=0, max=5726), HTML(value='')))"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "'''\n",
+    "    Monta o numpy.array com o path e a license plate (LP) de cada placa em unicos_entre_si.\n",
+    "    Para os casos de chaves que possuem mais de um  valor, escolhe aleatoriamente apenas 1 de cada.\n",
+    "    i.e:\n",
+    "    {'4698' : [\n",
+    "                ['s01_l01/2_7.png','7C24698'],\n",
+    "                ['s01_l02/479_6.png','6B44698']\n",
+    "                ] } -seleciona randomicamente-> ['s01_l02/479_6.png','6B44698']\n",
+    "    {'2347' : [\n",
+    "                ['s01_l01/4_17.png', '5AR2347']\n",
+    "                ] } ----seleciona o unico-----> ['s01_l01/4_17.png', '5AR2347']\n",
+    "'''\n",
+    "arr_unico_entre_si = []\n",
+    "for img in tqdm(unicos_entre_si):\n",
+    "    index = random.randint(0, len(unicos_entre_si[img])-1)\n",
+    "    arr_unico_entre_si.append(unicos_entre_si[img][index])\n",
+    "arr_unico_entre_si = np.array(arr_unico_entre_si)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "np.save(\"hlp-locations-final.npy\", arr_unico_entre_si)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "arr = np.load('hlp-locations-final.npy')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "d299abaabb2c45f88fc44f6a4a416a45",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "HBox(children=(IntProgress(value=0, max=5726), HTML(value='')))"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "\n",
+    "'''\n",
+    "    Copia as imagens das placas separadas em arr_unico_entre_si para uma pasta (Treino).\n",
+    "'''\n",
+    "for img in tqdm(arr):\n",
+    "    try:\n",
+    "        shutil.copy(os.path.join(DIR, img[0]), os.path.join(DIR_TREINO, f\"{img[1]}.png\"))\n",
+    "    except shutil.Error as err:\n",
+    "        print(err)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "fab6b2dd1dd14e8e8d78849fb3dffcbe",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "HBox(children=(IntProgress(value=0, description='Imagens', max=5726, style=ProgressStyle(description_width='in…"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "'''\n",
+    "    Recorta as imagens separadas na pasta Treino, separando e salvando somente os 4 ultimos digitos.\n",
+    "    Salva as imagens cortadas na pasta Treino2\n",
+    "'''\n",
+    "for img_name in tqdm(os.listdir(DIR_TREINO), desc=\"Imagens\"):\n",
+    "    img = cv2.imread(os.path.join(DIR_TREINO, img_name))\n",
+    "    num = []\n",
+    "    for i in range(img.shape[0]):\n",
+    "        tmp1 = []\n",
+    "        for j in range(int(img.shape[1]/2), img.shape[1]):\n",
+    "            tmp1.append(img[i][j])\n",
+    "        num.append(tmp1)\n",
+    "        \n",
+    "    num = np.array(num)\n",
+    "    cv2.imwrite(os.path.join(DIR_TREINO2, f\"{img_name[:-4][-4:]}.png\"), num)\n",
+    "    \n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "65cbbe85864a47958639164c93b46e57",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "HBox(children=(IntProgress(value=0, max=5726), HTML(value='')))"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "'''\n",
+    "    Gera um numpy.array com a imagem e a label da imagem para facilitar o backup (salvar apenas um numpy.array\n",
+    "    com os dados, ao inves de todas as 5000+ imagens). \n",
+    "    Imagens já com resize e cv2.IMREAD_GRAYSCALE\n",
+    "    \n",
+    "    img_array -> [ [imread(img), label], ...]\n",
+    "'''\n",
+    "img_array = []\n",
+    "for img_name in tqdm(os.listdir(DIR_TREINO2)):\n",
+    "    img = cv2.resize(cv2.imread(os.path.join(DIR_TREINO2, img_name), cv2.IMREAD_GRAYSCALE), (IMG_SIZE,IMG_SIZE))\n",
+    "    label = img_name[:-4]\n",
+    "    img_array.append([img, label])\n",
+    "\n",
+    "img_array = np.array(img_array)\n",
+    "    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "np.save(f\"hlp-dataset-{img_array.shape[0]}-GrayScale-({IMG_SIZE},{IMG_SIZE}).npy\", img_array)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {
+    "pycharm": {
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "arr = np.load(\"hlp-dataset-5726-GrayScale-(64,64).npy\")\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {
+    "pycharm": {
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "'''\n",
+    "\n",
+    "'''\n",
+    "np.random.shuffle(arr)\n",
+    "train_dataset = arr[:5700]\n",
+    "test_dataset = arr[5700:]\n",
+    "\n",
+    "np.save(f\"hlp-dataset-TREINO-{img_array.shape[0]}-GrayScale-({IMG_SIZE},{IMG_SIZE}).npy\", train_dataset)\n",
+    "np.save(f\"hlp-dataset-TESTE-{img_array.shape[0]}-GrayScale-({IMG_SIZE},{IMG_SIZE}).npy\", test_dataset)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "dataset = np.load(\"hlp-dataset-TESTE-5726-GrayScale-(64,64).npy\")\n",
+    "data = dataset[:, 0]\n",
+    "labels = dataset[:, 1]\n",
+    "del dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "d31fe2ff6c1448548b7f1ff3b713e69e",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "HBox(children=(IntProgress(value=0, max=26), HTML(value='')))"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "'''\n",
+    "\n",
+    "'''\n",
+    "lb = LabelBinarizer()\n",
+    "lb.fit(list('0123456789'))\n",
+    "labels_array = []\n",
+    "\n",
+    "for label in tqdm(labels, leave=True):\n",
+    "    num1, num2, num3, num4 = lb.transform(list(label))\n",
+    "    labels_array.append(num1)\n",
+    "    labels_array.append(num2)\n",
+    "    labels_array.append(num3)\n",
+    "    labels_array.append(num4)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "e29cb5f4ef734286b1758b12dc8d50cf",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "HBox(children=(IntProgress(value=0, max=26), HTML(value='')))"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "\n",
+    "training_data = []\n",
+    "for img in tqdm(data):\n",
+    "    numbers_array = [[], [], [], []]\n",
+    "    for linha in range(64):\n",
+    "        tmp = [[], [], [], []]  # [ [IMG_NUM1], [IMG_NUM2], [IMG_NUM3], [IMG_NUM4]]\n",
+    "        for coluna in range(5, 64):\n",
+    "            if coluna <= 13:\n",
+    "                tmp[0].append(img[linha][coluna])\n",
+    "            elif 24 >= coluna > 15:\n",
+    "                tmp[1].append(img[linha][coluna])\n",
+    "            elif 35 >= coluna > 26:\n",
+    "                tmp[2].append(img[linha][coluna])\n",
+    "            elif 46 >= coluna > 37:\n",
+    "                tmp[3].append(img[linha][coluna])\n",
+    "            else:\n",
+    "                continue\n",
+    "        numbers_array[0].append(tmp[0])\n",
+    "        numbers_array[1].append(tmp[1])\n",
+    "        numbers_array[2].append(tmp[2])\n",
+    "        numbers_array[3].append(tmp[3])\n",
+    "    numbers_array[0] = np.array(numbers_array[0])\n",
+    "    numbers_array[1] = np.array(numbers_array[1])\n",
+    "    numbers_array[2] = np.array(numbers_array[2])\n",
+    "    numbers_array[3] = np.array(numbers_array[3])\n",
+    "\n",
+    "    for index, number_img in enumerate(numbers_array):\n",
+    "        training_data.append([np.array(number_img), np.array(labels_array[index], dtype=np.uint8)])\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "pycharm": {
+     "is_executing": false,
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "np.save(f\"hlp-testing_data-{len(training_data)}-Labeled-GrayScale-({IMG_SIZE},9).npy\", training_data)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "pycharm": {
+     "metadata": false,
+     "name": "#%%\n"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def visualizarImagem(img, label):\n",
+    "    cv2.imshow(label, img)\n",
+    "    cv2.waitKey(0)\n",
+    "    cv2.destroyAllWindows()\n",
+    "    \n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
